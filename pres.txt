@@ -1,0 +1,109 @@
+- Lorenz's choices for $\beta = \frac{8}{3}$, $\sigma = 10$, and $\rho = 28$ were intentional.
+
+- With these parameters almost all IC's tend toward an invariant set of states as the system evolves numerically.
+
+- For a general ODE this set of states is called an $\textbf{attractor}$, and if these states form a fractal they are called a $\textbf{strange attractor}$.
+
+    - Because it's a notable example, the strange attractor that emerges from the Lorenz system is dubbed the $\textbf{Lorenz attractor}$.
+
+
+
+- While the Lorenz attractor is a notable example, these behaviours emerge from a variety of dynamical systems.
+
+- Most often, but not always, strange attractors emerge from chaotic systems.
+
+- As Jed mentioned in the introduction, a necessary condition of a chaotic system is that the behaviour of the system is heavily dependent on the choice of initial conditions.
+
+## Sensitivity to Initial Conditions
+
+- We can visualize this initial condition dependence by taking a dynamical system that is known to be chaotic, i.e. the Lorenz system with $\beta = \frac{8}{3}$, $\sigma = 10$, and $\rho = 28$, and perturb $z_0$.
+
+u1 = [-15.0;-15.0;20.0]
+prob = ODEProblem(lorenz,u1,tspan)
+sol_unperturbed = solve(prob, Tsit5())
+plot(sol,vars=(1,2,3))
+
+u1 = [-15.0;-15.0;20.00001]
+prob = ODEProblem(lorenz,u1,tspan)
+sol_perturbed = solve(prob, Tsit5())
+
+plot(sol_unperturbed,vars=(1), color=1, xlims=(0, 20))
+plot!(sol_perturbed,vars=(1), color=2, xlims=(0, 20))
+
+
+plot(sol_unperturbed,vars=(2), color=1, xlims=(0, 20))
+plot!(sol_perturbed,vars=(2), color=2, xlims=(0, 20))
+
+
+plot(sol_unperturbed,vars=(3), color=1, xlims=(0, 20))
+plot!(sol_perturbed,vars=(3), color=2, xlims=(0, 20))
+
+
+- Despite having $z_0$ differ by one part in $10^6$, the systems diverge wildly after the $\approx 13^{th}$ timestep.
+- To briefly quantify this behaviour, we note that an initial state difference of $10^{-5}$ in $z_0$ has grown by six orders of magnitude over $15$ time steps.
+
+
+### Can we quantify this rate of divergence?
+
+
+
+- To quantify trends in the sensitivity of chaotic dynamical systems to initial conditions, it is useful to first visualize the rate of divergence over time.
+
+- We can do so by plotting the $l$-2 norm of the difference between the perturbed and unperturbed states as a function of time. 
+    
+    - This has been done for the Lorenz system below.
+
+
+TT = 1:1:500
+err = @. sqrt((sol_perturbed[1, TT]-sol_unperturbed[1, TT])^2+(sol_perturbed[2, TT]-sol_unperturbed[2, TT])^2+(sol_perturbed[3, TT]-sol_unperturbed[3, TT])^2)
+
+TT = (1:1:500) * (40 / 700)
+plot(TT,err, yaxis=:log, xlabel="t", ylabel=L"|| \hat{y}(t) - y(t) ||_{2}", title=L"l" * "-2 Norm of Perturbed and Unperturbed State Difference vs. Time", label="", size=(800,400))
+
+
+
+
+- Applying this visualization reveals two distinct regions in the growth of the perturbations in our initially perturbed and unperturbed systems.
+
+- When T > 15, the $l$-2 error appears to reach an equilibrium and stops growing.
+
+- When T < 15, the $l$-2 error appears to grow exponentially. 
+
+
+
+- In general, the rate of growth in this initial exponential regime for a particular ODE is called it's $\textbf{Lyapunov exponent}$. 
+
+- This exponent is defined as $\approx 0.9052$ for the Lorenz system. 
+
+- Plotting an exponential function with this Lyapunov exponent looks as follows.
+
+
+
+TT = 1:1:500
+err = @. sqrt((sol_perturbed[1, TT]-sol_unperturbed[1, TT])^2+(sol_perturbed[2, TT]-sol_unperturbed[2, TT])^2+(sol_perturbed[3, TT]-sol_unperturbed[3, TT])^2)
+
+TT = (1:1:500) * (40 / 700)
+plot(TT,err, yaxis=:log, xlabel="t", ylabel=L"|| \hat{y}(t) - y(t) ||_{2}", title=L"l" * "-2 Norm of Perturbed and Unperturbed State Difference vs. Time",legend=:bottomright, label="perturbation norm", size=(800,400))
+
+TT = (1:1:300) * (40 / 700)
+plot!(TT, 0.0001 *exp.(TT * 0.9052), label=L"\lambda = 0.9052")
+
+
+
+- We can say that perturbations in Lorenz systems typically grow at a rate of:
+
+\begin{align*}
+    \| \hat{y}(t) - y(t) \|_2 &\approx Ce^{0.9052t}
+\end{align*}
+
+In general, the formal definition of a Lyapunov exponent is given by:
+
+\begin{align*}
+    \lambda &= \underset{t \rightarrow \infty}{lim} \underset{\| \delta y(0) \| \rightarrow 0}{limsup} t^{-1} log \frac{\| \delta y(t) \|}{\| \delta y(0) \|},
+\end{align*}
+
+where:
+
+\begin{align*}
+    \delta y(t) &= \hat{y}(t) - y(t)
+\end{align*}
